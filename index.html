@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transcripción de Voz en Tiempo Real</title>
+  <style>
+    /* Estilos generales */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #2a7ae4;
+      margin-bottom: 10px;
+    }
+
+    footer {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    #transcript {
+      border: 2px solid #ddd;
+      background-color: #fff;
+      padding: 15px;
+      width: 100%;
+      max-width: 600px;
+      min-height: 150px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      font-size: 1rem;
+      line-height: 1.5;
+      overflow-y: auto;
+    }
+
+    button {
+      background-color: #2a7ae4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #1e5bbf;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #conversation-history {
+      margin-top: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 600px;
+      background-color: #eef6ff;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    #conversation-history h2 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      color: #2a7ae4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Transcripción de Voz en Tiempo Real</h1>
+    <footer>Desarrollado con ❤ por Sinsit</footer>
+    <div id="transcript">Aquí aparecerá la transcripción...</div>
+    <button id="startStopButton">Iniciar Transcripción</button>
+    <div id="conversation-history">
+      <h2>Historial de Conversación</h2>
+      <p id="history-content">No hay transcripción aún.</p>
+    </div>
+  </div>
+
+  <script>
+    const startStopButton = document.getElementById('startStopButton');
+    const transcriptDiv = document.getElementById('transcript');
+    const historyDiv = document.getElementById('history-content');
+    let isTranscribing = false;
+    let recognition;
+    let conversationHistory = ""; // Variable para almacenar toda la conversación
+
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+    } else if ('SpeechRecognition' in window) {
+      recognition = new SpeechRecognition();
+    } else {
+      alert('Tu navegador no soporta la API de reconocimiento de voz. Usa Google Chrome u otro navegador compatible.');
+    }
+
+    if (recognition) {
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'es-ES'; // Configuración para español
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        // Actualiza el historial con el texto final
+        conversationHistory += finalTranscript + " ";
+
+        // Muestra en pantalla el texto interino y el final
+        transcriptDiv.innerHTML = `
+          <strong>Final:</strong> ${finalTranscript}<br/>
+          <strong>Interino:</strong> ${interimTranscript}`;
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Error en el reconocimiento de voz', event);
+      };
+    }
+
+    startStopButton.addEventListener('click', () => {
+      if (isTranscribing) {
+        recognition.stop();
+        startStopButton.textContent = 'Iniciar Transcripción';
+
+        // Actualiza el contenido del historial
+        historyDiv.textContent = conversationHistory.trim() || "No hay transcripción aún.";
+      } else {
+        recognition.start();
+        startStopButton.textContent = 'Detener Transcripción';
+      }
+      isTranscribing = !isTranscribing;
+    });
+  </script>
+</body>
+</html>
